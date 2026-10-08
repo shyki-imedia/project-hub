@@ -1,11 +1,47 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ProjectConfig } from '../electron/types'
+import { resolveProjectUrl } from '../electron/types'
+import {
+  IconCursor,
+  IconExternal,
+  IconFolder,
+  IconGear,
+  IconRefresh,
+  IconRocket,
+  IconSearch,
+  IconStop,
+} from './icons'
 
 type Status = { kind: 'idle' | 'ok' | 'error'; text: string }
+
+function IconButton({
+  label,
+  className,
+  onClick,
+  children,
+}: {
+  label: string
+  className?: string
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      className={`icon-btn ${className ?? ''}`.trim()}
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  )
+}
 
 export default function App() {
   const [projects, setProjects] = useState<ProjectConfig[]>([])
   const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
   const [status, setStatus] = useState<Status>({ kind: 'idle', text: '' })
 
   const refresh = useCallback(async () => {
@@ -28,27 +64,57 @@ export default function App() {
     void refresh()
   }, [refresh])
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return projects
+    return projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.id.toLowerCase().includes(q) ||
+        p.path.toLowerCase().includes(q),
+    )
+  }, [projects, query])
+
   async function run(project: ProjectConfig, command: string, label: string) {
-    setStatus({ kind: 'idle', text: `Running ${label}…` })
+    setStatus({ kind: 'idle', text: `${label}: ${project.name}…` })
     const result = await window.hub.runCommand({
       projectPath: project.path,
       command,
     })
     if (result.ok) {
-      setStatus({ kind: 'ok', text: `${label} opened in ${result.terminal}` })
+      setStatus({ kind: 'ok', text: `${label} → ${result.terminal}` })
     } else {
       setStatus({ kind: 'error', text: result.error ?? 'Command failed' })
     }
   }
 
   async function openCursor(project: ProjectConfig) {
-    setStatus({ kind: 'idle', text: `Opening ${project.name} in Cursor…` })
     const result = await window.hub.openCursor(project.path)
-    if (result.ok) {
-      setStatus({ kind: 'ok', text: `Opened ${project.name} in Cursor` })
-    } else {
-      setStatus({ kind: 'error', text: result.error ?? 'Failed to open Cursor' })
-    }
+    setStatus(
+      result.ok
+        ? { kind: 'ok', text: `Cursor: ${project.name}` }
+        : { kind: 'error', text: result.error ?? 'Failed to open Cursor' },
+    )
+  }
+
+  async function openFolder(project: ProjectConfig) {
+    const result = await window.hub.openFolder(project.path)
+    setStatus(
+      result.ok
+        ? { kind: 'ok', text: `Folder: ${project.path}` }
+        : { kind: 'error', text: result.error ?? 'Failed to open folder' },
+    )
+  }
+
+  async function openSite(project: ProjectConfig) {
+    const url = resolveProjectUrl(project)
+    if (!url) return
+    const result = await window.hub.openUrl(url)
+    setStatus(
+      result.ok
+        ? { kind: 'ok', text: url }
+        : { kind: 'error', text: result.error ?? 'Failed to open URL' },
+    )
   }
 
   return (
@@ -56,12 +122,24 @@ export default function App() {
       <header>
         <div>
           <h1>Project Hub</h1>
-          <p>Запуск, деплой и открытие проектов в Cursor</p>
+          <p>Запуск, деплой и открытие проектов</p>
         </div>
-        <button type="button" className="ghost" onClick={() => void refresh()}>
-          Refresh
-        </button>
+        <IconButton label="Refresh" className="ghost" onClick={() => void refresh()}>
+          <IconRefresh />
+        </IconButton>
       </header>
+
+      <div className="toolbar">
+        <label className="search">
+          <IconSearch />
+          <input
+            type="search"
+            placeholder="Поиск проекта…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+      </div>
 
       <div className={`status ${status.kind !== 'idle' ? status.kind : ''}`}>
         {status.text}
@@ -69,75 +147,107 @@ export default function App() {
 
       {loading ? (
         <p className="empty">Loading…</p>
-      ) : projects.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <p className="empty">
-          Нет проектов. Добавьте <code>projects/&lt;id&gt;/project.yaml</code>
+          {projects.length === 0 ? (
+            <>
+              Нет проектов. Добавьте{' '}
+              <code>projects/&lt;id&gt;/project.yaml</code>
+            </>
+          ) : (
+            'Ничего не найдено'
+          )}
         </p>
       ) : (
-        <div className="list">
-          {projects.map((project) => (
-            <article key={project.id} className="project">
-              <div className="project-meta">
-                <h2>{project.name}</h2>
-                <div className="path">{project.path}</div>
-              </div>
-              <div className="actions">
-                {project.commands.dev ? (
-                  <button
-                    type="button"
-                    className="primary"
-                    onClick={() =>
-                      void run(project, project.commands.dev!, 'Dev')
-                    }
+        <div className="grid">
+          {filtered.map((project) => {
+            const siteUrl = resolveProjectUrl(project)
+            return (
+              <article key={project.id} className="card">
+                <div className="card-top">
+                  <h2 title={project.path}>{project.name}</h2>
+                  <div className="card-meta">
+                    <IconButton
+                      label="Открыть папку"
+                      onClick={() => void openFolder(project)}
+                    >
+                      <IconFolder />
+                    </IconButton>
+                    {siteUrl ? (
+                      <IconButton
+                        label={`Открыть ${siteUrl}`}
+                        className="open-site"
+                        onClick={() => void openSite(project)}
+                      >
+                        <IconExternal />
+                      </IconButton>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="card-actions">
+                  {project.commands.dev ? (
+                    <IconButton
+                      label="Dev"
+                      className="primary"
+                      onClick={() =>
+                        void run(project, project.commands.dev!, 'Dev')
+                      }
+                    >
+                      <IconGear />
+                    </IconButton>
+                  ) : null}
+                  {project.commands.stop ? (
+                    <IconButton
+                      label="Stop"
+                      className="danger"
+                      onClick={() =>
+                        void run(project, project.commands.stop!, 'Stop')
+                      }
+                    >
+                      <IconStop />
+                    </IconButton>
+                  ) : null}
+                  {project.commands['deploy:dev'] ? (
+                    <IconButton
+                      label="Deploy Dev"
+                      className="deploy-dev"
+                      onClick={() =>
+                        void run(
+                          project,
+                          project.commands['deploy:dev']!,
+                          'Deploy Dev',
+                        )
+                      }
+                    >
+                      <IconRocket />
+                    </IconButton>
+                  ) : null}
+                  {project.commands['deploy:prod'] ? (
+                    <IconButton
+                      label="Deploy Prod"
+                      className="deploy-prod"
+                      onClick={() =>
+                        void run(
+                          project,
+                          project.commands['deploy:prod']!,
+                          'Deploy Prod',
+                        )
+                      }
+                    >
+                      <IconRocket />
+                    </IconButton>
+                  ) : null}
+                  <IconButton
+                    label="Open in Cursor"
+                    onClick={() => void openCursor(project)}
                   >
-                    Dev
-                  </button>
-                ) : null}
-                {project.commands.stop ? (
-                  <button
-                    type="button"
-                    className="danger"
-                    onClick={() =>
-                      void run(project, project.commands.stop!, 'Stop')
-                    }
-                  >
-                    Stop
-                  </button>
-                ) : null}
-                {project.commands['deploy:dev'] ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void run(
-                        project,
-                        project.commands['deploy:dev']!,
-                        'Deploy Dev',
-                      )
-                    }
-                  >
-                    Deploy Dev
-                  </button>
-                ) : null}
-                {project.commands['deploy:prod'] ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void run(
-                        project,
-                        project.commands['deploy:prod']!,
-                        'Deploy Prod',
-                      )
-                    }
-                  >
-                    Deploy Prod
-                  </button>
-                ) : null}
-                <button type="button" onClick={() => void openCursor(project)}>
-                  Cursor
-                </button>
-              </div>
-            </article>
-          ))}
+                    <IconCursor />
+                  </IconButton>
+                </div>
+              </article>
+            )
+          })}
         </div>
       )}
     </div>

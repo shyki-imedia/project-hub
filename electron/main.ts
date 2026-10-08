@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { spawn } from 'node:child_process'
 import { existsSync, realpathSync, readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -157,6 +157,8 @@ function loadProjects(): ProjectConfig[] {
       const data = parseYaml(raw) as {
         name?: string
         path?: string
+        url?: string
+        port?: number
         commands?: ProjectCommands
       }
 
@@ -166,6 +168,8 @@ function loadProjects(): ProjectConfig[] {
         id: entry.name,
         name: data.name,
         path: data.path,
+        url: data.url,
+        port: data.port,
         commands: data.commands ?? {},
       })
     } catch (err) {
@@ -187,9 +191,9 @@ function appIconPath(): string | undefined {
 function createWindow() {
   const icon = appIconPath()
   const win = new BrowserWindow({
-    width: 960,
+    width: 980,
     height: 720,
-    minWidth: 640,
+    minWidth: 700,
     minHeight: 480,
     title: 'Project Hub',
     backgroundColor: '#141414',
@@ -252,6 +256,20 @@ app.whenReady().then(() => {
     })
     child.unref()
 
+    return { ok: true }
+  })
+
+  ipcMain.handle('projects:openFolder', async (_event, projectPath: string) => {
+    if (!projectPath || !existsSync(projectPath)) {
+      return { ok: false, error: `Path does not exist: ${projectPath}` }
+    }
+    const err = await shell.openPath(projectPath)
+    return err ? { ok: false, error: err } : { ok: true }
+  })
+
+  ipcMain.handle('projects:openUrl', async (_event, url: string) => {
+    if (!url) return { ok: false, error: 'Missing url' }
+    await shell.openExternal(url)
     return { ok: true }
   })
 

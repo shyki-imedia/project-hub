@@ -1,0 +1,98 @@
+import type { ReactNode } from 'react'
+
+type IconProps = { size?: number; className?: string }
+
+function Svg({
+  size = 16,
+  className,
+  children,
+}: IconProps & { children: ReactNode }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      {children}
+    </svg>
+  )
+}
+
+export function IconFolder({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </Svg>
+  )
+}
+
+export function IconExternal({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <path d="M14 3h7v7" />
+      <path d="M10 14 21 3" />
+      <path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6" />
+    </Svg>
+  )
+}
+
+export function IconGear({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" />
+    </Svg>
+  )
+}
+
+export function IconStop({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" stroke="none" />
+    </Svg>
+  )
+}
+
+export function IconRocket({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <path d="M5 19c2-1 4.5-1.5 7-4.5 1.2-1.4 2-3.2 2.5-5 .2-.8.3-1.6.3-2.4 0-.5-.1-1-.2-1.5C11.5 6.2 8.8 7.5 6.5 10 3.5 12.5 3 15 2 17l3 2z" />
+      <path d="M14 4.5c.8-.2 1.7-.3 2.5-.3.8 0 1.6.1 2.4.3L16 8" />
+      <path d="M9 15l-2 4 4-2" />
+    </Svg>
+  )
+}
+
+/** Simple cursor-arrow mark for “open in Cursor” */
+export function IconCursor({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <path d="M4 3l7 17 2.5-6.5L20 11z" fill="currentColor" stroke="none" />
+    </Svg>
+  )
+}
+
+export function IconSearch({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </Svg>
+  )
+}
+
+export function IconRefresh({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <path d="M21 12a9 9 0 1 1-2.6-6.4" />
+      <path d="M21 3v6h-6" />
+    </Svg>
+  )
+}

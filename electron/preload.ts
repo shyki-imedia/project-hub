@@ -14,6 +14,14 @@ const api = {
     projectPath: string,
   ): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('projects:openCursor', projectPath),
+
+  openFolder: (
+    projectPath: string,
+  ): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('projects:openFolder', projectPath),
+
+  openUrl: (url: string): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('projects:openUrl', url),
 }
 
 contextBridge.exposeInMainWorld('hub', api)

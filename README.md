@@ -43,6 +43,7 @@ projects/
 ```yaml
 name: My App
 path: /absolute/path/to/repo
+url: http://localhost:3000   # или port: 3000
 commands:
   dev: pnpm dev
   stop: docker compose down
