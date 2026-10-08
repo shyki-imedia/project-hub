@@ -93,6 +93,17 @@ export default function App() {
                     Dev
                   </button>
                 ) : null}
+                {project.commands.stop ? (
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={() =>
+                      void run(project, project.commands.stop!, 'Stop')
+                    }
+                  >
+                    Stop
+                  </button>
+                ) : null}
                 {project.commands['deploy:dev'] ? (
                   <button
                     type="button"

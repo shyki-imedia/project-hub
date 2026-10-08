@@ -7,7 +7,7 @@ Electron + Vite + React. Команды выполняются в системн
 ## Возможности
 
 - Список проектов из YAML-конфигов
-- **Dev** / **Deploy Dev** / **Deploy Prod** — только если команда задана в конфиге
+- **Dev** / **Stop** / **Deploy Dev** / **Deploy Prod** — только если команда задана в конфиге
 - **Cursor** — открыть проект через `cursor -n <path>`
 - Ярлык в меню приложений и Dock (`scripts/launch.sh`)
 
@@ -45,11 +45,21 @@ name: My App
 path: /absolute/path/to/repo
 commands:
   dev: pnpm dev
+  stop: docker compose down
   "deploy:dev": pnpm deploy:dev
   # "deploy:prod": pnpm deploy:prod
 ```
 
-Кнопки появляются только для указанных ключей: `dev`, `deploy:dev`, `deploy:prod`.
+Кнопки появляются только для указанных ключей: `dev`, `stop`, `deploy:dev`, `deploy:prod`.
+
+
+## Docker для проектов
+
+Локальный Docker **не** кладём в корень сайта. Конвенция:
+
+1. Все файлы стека — в `<проект>/project_hub/` (`docker-compose.yml`, `.env`, nginx/php, скрипты восстановления).
+2. В `.gitignore` сайта добавить `/project_hub/`.
+3. В `projects/<id>/project.yaml` команды `dev` / `stop` указывают на `project_hub/docker-compose.yml`.
 
 ## Иконка
 

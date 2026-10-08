@@ -1,5 +1,6 @@
 export type ProjectCommands = {
   dev?: string
+  stop?: string
   'deploy:dev'?: string
   'deploy:prod'?: string
 }
