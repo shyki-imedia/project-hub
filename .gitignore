@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-electron/
+
+# Local project configs (personal)
+projects/
+
+# pnpm / tooling
+pnpm-workspace.yaml
+.pnpm-store/
+*.local
+
+# Logs & caches
+*.log
+npm-debug.log*
+.vite/
+.cache/
+.turbo/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Electron
+out/
+release/
+*.AppImage
+*.deb
+*.rpm
