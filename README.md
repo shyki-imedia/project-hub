@@ -57,9 +57,9 @@ commands:
 
 Локальный Docker **не** кладём в корень сайта. Конвенция:
 
-1. Все файлы стека — в `<проект>/project_hub/` (`docker-compose.yml`, `.env`, nginx/php, скрипты восстановления).
-2. В `.gitignore` сайта добавить `/project_hub/`.
-3. В `projects/<id>/project.yaml` команды `dev` / `stop` указывают на `project_hub/docker-compose.yml`.
+1. Все файлы стека — в `<проект>/.project_hub/` (`docker-compose.yml`, `.env`, nginx/php, скрипты восстановления).
+2. В `.gitignore` сайта добавить `/.project_hub/`.
+3. В `projects/<id>/project.yaml` команды `dev` / `stop` указывают на `.project_hub/docker-compose.yml`.
 
 ## Иконка
 

@@ -1,5 +1,5 @@
 ---
-description: Docker for managed projects must live in project_hub/ and stay gitignored
+description: Docker for managed projects must live in .project_hub/ and stay gitignored
 alwaysApply: true
 ---
 
@@ -7,15 +7,15 @@ alwaysApply: true
 
 When adding or wiring a project in Project Hub:
 
-1. Put **all** local Docker / hub runtime files under `<project>/project_hub/` (compose, `.env`, nginx/php configs, restore scripts, dumps).
-2. Add `/project_hub/` to that project's `.gitignore` so it never lands in the site repo.
-3. In Hub `projects/<id>/project.yaml`, point `dev` / `stop` at compose inside `project_hub/`, for example:
+1. Put **all** local Docker / hub runtime files under `<project>/.project_hub/` (compose, `.env`, nginx/php configs, restore scripts, dumps). Leading dot keeps it out of the way of site folders.
+2. Add `/.project_hub/` to that project's `.gitignore` so it never lands in the site repo.
+3. In Hub `projects/<id>/project.yaml`, point `dev` / `stop` at compose inside `.project_hub/`, for example:
 
 ```yaml
 commands:
-  dev: docker compose -f project_hub/docker-compose.yml up -d --build
-  stop: docker compose -f project_hub/docker-compose.yml down
+  dev: docker compose -f .project_hub/docker-compose.yml up -d --build
+  stop: docker compose -f .project_hub/docker-compose.yml down
 ```
 
-4. Do **not** create a top-level `docker/` folder in the managed project for Hub purposes.
-5. Site-specific Bitrix local configs (`.settings.php`, `dbconn.php`) stay as the project already gitignores them; Hub-only tooling stays under `project_hub/`.
+4. Do **not** create a top-level `docker/` or `project_hub/` folder in the managed project for Hub purposes.
+5. Site-specific Bitrix local configs (`.settings.php`, `dbconn.php`) stay as the project already gitignores them; Hub-only tooling stays under `.project_hub/`.
