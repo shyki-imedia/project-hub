@@ -4,6 +4,8 @@
 
 Electron + Vite + React. Команды выполняются в системном терминале (Ptyxis / gnome-terminal и т.д.), без встроенных логов.
 
+![Project Hub UI](docs/ui-preview.png)
+
 ## Возможности
 
 - Список проектов из YAML-конфигов

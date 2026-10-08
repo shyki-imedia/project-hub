@@ -27,6 +27,7 @@ Thumbs.db
 .vscode/
 *.swp
 *~
+*.bak
 
 # Electron
 out/
