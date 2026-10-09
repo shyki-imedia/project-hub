@@ -7,7 +7,7 @@ type Props = {
   onDone: (ok: boolean, text: string) => void
 }
 
-export default function GitPushForm({ project, onClose, onDone }: Props) {
+export default function GitCommitForm({ project, onClose, onDone }: Props) {
   const [branch, setBranch] = useState('…')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
@@ -41,7 +41,7 @@ export default function GitPushForm({ project, onClose, onDone }: Props) {
     }
     setSaving(true)
     setError('')
-    const result = await window.hub.gitPush({
+    const result = await window.hub.gitCommit({
       projectPath: project.path,
       message: message.trim(),
     })
@@ -50,7 +50,7 @@ export default function GitPushForm({ project, onClose, onDone }: Props) {
       onDone(false, result.error ?? 'Есть ошибки')
       return
     }
-    onDone(true, `Push ok → ${branch}`)
+    onDone(true, `Commit ok → ${branch}`)
   }
 
   return (
@@ -59,11 +59,11 @@ export default function GitPushForm({ project, onClose, onDone }: Props) {
         className="modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="git-push-title"
+        aria-labelledby="git-commit-title"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="modal-header">
-          <h2 id="git-push-title">Git push — {project.name}</h2>
+          <h2 id="git-commit-title">Git commit — {project.name}</h2>
           <button type="button" className="text-btn" onClick={onClose}>
             Закрыть
           </button>
@@ -71,7 +71,7 @@ export default function GitPushForm({ project, onClose, onDone }: Props) {
 
         <form className="modal-form" onSubmit={(e) => void onSubmit(e)}>
           <label className="field">
-            <span>Ветка</span>
+            <span>Текущая ветка</span>
             <input value={loading ? 'загрузка…' : branch} readOnly />
           </label>
 
@@ -98,7 +98,7 @@ export default function GitPushForm({ project, onClose, onDone }: Props) {
               className="save-btn"
               disabled={saving || loading || branch === '—'}
             >
-              {saving ? 'Push…' : 'git add · commit · push'}
+              {saving ? 'Commit…' : 'git add · commit'}
             </button>
           </div>
         </form>

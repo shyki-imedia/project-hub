@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ProjectConfig } from '../electron/types'
 import { resolveProjectUrl } from '../electron/types'
-import GitPushForm from './GitPushForm'
+import GitCommitForm from './GitCommitForm'
 import ProjectForm from './ProjectForm'
 import {
   IconCursor,
   IconExternal,
   IconFigma,
+  IconGitCommit,
   IconGitPull,
   IconGitPush,
   IconPlay,
@@ -53,7 +54,7 @@ export default function App() {
   const [status, setStatus] = useState<Status>({ kind: 'idle', text: '' })
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<ProjectConfig | null>(null)
-  const [pushProject, setPushProject] = useState<ProjectConfig | null>(null)
+  const [commitProject, setCommitProject] = useState<ProjectConfig | null>(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -123,6 +124,16 @@ export default function App() {
     setStatus(
       result.ok
         ? { kind: 'ok', text: `Pull ok — ${project.name}` }
+        : { kind: 'error', text: result.error ?? 'Есть ошибки' },
+    )
+  }
+
+  async function gitPush(project: ProjectConfig) {
+    setStatus({ kind: 'idle', text: `git push: ${project.name}…` })
+    const result = await window.hub.gitPush(project.path)
+    setStatus(
+      result.ok
+        ? { kind: 'ok', text: `Push ok — ${project.name}` }
         : { kind: 'error', text: result.error ?? 'Есть ошибки' },
     )
   }
@@ -326,9 +337,16 @@ export default function App() {
                     <IconGitPull />
                   </IconButton>
                   <IconButton
+                    label="git commit"
+                    className="git-commit"
+                    onClick={() => setCommitProject(project)}
+                  >
+                    <IconGitCommit />
+                  </IconButton>
+                  <IconButton
                     label="git push"
                     className="git-push"
-                    onClick={() => setPushProject(project)}
+                    onClick={() => void gitPush(project)}
                   >
                     <IconGitPush />
                   </IconButton>
@@ -350,12 +368,12 @@ export default function App() {
         />
       ) : null}
 
-      {pushProject ? (
-        <GitPushForm
-          project={pushProject}
-          onClose={() => setPushProject(null)}
+      {commitProject ? (
+        <GitCommitForm
+          project={commitProject}
+          onClose={() => setCommitProject(null)}
           onDone={(ok, text) => {
-            setPushProject(null)
+            setCommitProject(null)
             setStatus({ kind: ok ? 'ok' : 'error', text })
           }}
         />

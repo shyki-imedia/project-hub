@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
-  GitPushPayload,
+  GitCommitPayload,
   ProjectConfig,
   ProjectSavePayload,
   RunCommandPayload,
@@ -51,10 +51,15 @@ const api = {
   ): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('projects:gitPull', projectPath),
 
-  gitPush: (
-    payload: GitPushPayload,
+  gitCommit: (
+    payload: GitCommitPayload,
   ): Promise<{ ok: boolean; error?: string }> =>
-    ipcRenderer.invoke('projects:gitPush', payload),
+    ipcRenderer.invoke('projects:gitCommit', payload),
+
+  gitPush: (
+    projectPath: string,
+  ): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('projects:gitPush', projectPath),
 }
 
 contextBridge.exposeInMainWorld('hub', api)

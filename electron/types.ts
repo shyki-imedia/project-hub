@@ -37,7 +37,7 @@ export type ProjectSavePayload = {
   createProjectHub?: boolean
 }
 
-export type GitPushPayload = {
+export type GitCommitPayload = {
   projectPath: string
   message: string
 }

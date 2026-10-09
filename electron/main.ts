@@ -13,7 +13,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import type {
-  GitPushPayload,
+  GitCommitPayload,
   ProjectConfig,
   ProjectCommands,
   ProjectSavePayload,
@@ -99,23 +99,54 @@ function buildOpenTerminalArgs(
   terminal: string,
   cwd: string,
 ): { bin: string; args: string[] } {
+  // Always force cwd via bash so path from project.yaml is respected.
+  const shell = `cd ${JSON.stringify(cwd)} && exec bash`
+
   switch (terminal) {
     case 'ptyxis':
-      return { bin: 'ptyxis', args: [`--working-directory=${cwd}`] }
+      return {
+        bin: 'ptyxis',
+        args: [
+          '-d',
+          cwd,
+          '--new-window',
+          '-x',
+          `bash -lc ${JSON.stringify(shell)}`,
+        ],
+      }
     case 'gnome-terminal':
-      return { bin: 'gnome-terminal', args: ['--working-directory', cwd] }
+      return {
+        bin: 'gnome-terminal',
+        args: ['--working-directory', cwd, '--', 'bash', '-lc', shell],
+      }
     case 'kitty':
-      return { bin: 'kitty', args: ['--directory', cwd] }
+      return {
+        bin: 'kitty',
+        args: ['--directory', cwd, 'bash', '-lc', shell],
+      }
     case 'alacritty':
-      return { bin: 'alacritty', args: ['--working-directory', cwd] }
+      return {
+        bin: 'alacritty',
+        args: ['--working-directory', cwd, '-e', 'bash', '-lc', shell],
+      }
     case 'konsole':
-      return { bin: 'konsole', args: ['--workdir', cwd] }
+      return {
+        bin: 'konsole',
+        args: ['--workdir', cwd, '-e', 'bash', '-lc', shell],
+      }
     case 'xfce4-terminal':
-      return { bin: 'xfce4-terminal', args: [`--working-directory=${cwd}`] }
+      return {
+        bin: 'xfce4-terminal',
+        args: [
+          `--working-directory=${cwd}`,
+          '-e',
+          `bash -lc ${JSON.stringify(shell)}`,
+        ],
+      }
     default:
       return {
         bin: terminal,
-        args: ['--', 'bash', '-lc', `cd ${JSON.stringify(cwd)}; exec bash`],
+        args: ['--', 'bash', '-lc', shell],
       }
   }
 }
@@ -509,8 +540,8 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle(
-    'projects:gitPush',
-    async (_event, payload: GitPushPayload) => {
+    'projects:gitCommit',
+    async (_event, payload: GitCommitPayload) => {
       const projectPath = payload.projectPath?.trim()
       const message = payload.message?.trim()
       if (!projectPath || !existsSync(projectPath)) {
@@ -522,17 +553,20 @@ app.whenReady().then(() => {
       if (!add.ok) return { ok: false, error: 'Есть ошибки (git add)' }
 
       const commit = await runGit(projectPath, ['commit', '-m', message])
-      if (!commit.ok) {
-        // nothing to commit is still a failure for this flow
-        return { ok: false, error: 'Есть ошибки (git commit)' }
-      }
-
-      const push = await runGit(projectPath, ['push'])
-      if (!push.ok) return { ok: false, error: 'Есть ошибки (git push)' }
+      if (!commit.ok) return { ok: false, error: 'Есть ошибки (git commit)' }
 
       return { ok: true }
     },
   )
+
+  ipcMain.handle('projects:gitPush', async (_event, projectPath: string) => {
+    if (!projectPath || !existsSync(projectPath)) {
+      return { ok: false, error: `Path does not exist: ${projectPath}` }
+    }
+    const result = await runGit(projectPath, ['push'])
+    if (!result.ok) return { ok: false, error: 'Есть ошибки (git push)' }
+    return { ok: true }
+  })
 
   ipcMain.handle('projects:openUrl', async (_event, url: string) => {
     if (!url) return { ok: false, error: 'Missing url' }

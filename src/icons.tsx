@@ -156,6 +156,15 @@ export function IconGitPush({ size, className }: IconProps) {
   )
 }
 
+export function IconGitCommit({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 3v6M12 15v6" />
+    </Svg>
+  )
+}
+
 /** Simplified Figma mark */
 export function IconFigma({ size = 16, className }: IconProps) {
   return (

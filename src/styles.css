@@ -331,6 +331,10 @@ header p {
   color: #8ab4f8;
 }
 
+.icon-btn.git-commit {
+  color: #e6c07b;
+}
+
 .icon-btn.git-push {
   color: #c58af9;
 }
