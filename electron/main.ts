@@ -13,6 +13,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import type {
+  GitPushPayload,
   ProjectConfig,
   ProjectCommands,
   ProjectSavePayload,
@@ -92,6 +93,62 @@ async function findTerminal(): Promise<string | null> {
 
 function holdShell(command: string): string {
   return `${command}; echo; echo "[exit $?] — press Enter to close"; read`
+}
+
+function buildOpenTerminalArgs(
+  terminal: string,
+  cwd: string,
+): { bin: string; args: string[] } {
+  switch (terminal) {
+    case 'ptyxis':
+      return { bin: 'ptyxis', args: [`--working-directory=${cwd}`] }
+    case 'gnome-terminal':
+      return { bin: 'gnome-terminal', args: ['--working-directory', cwd] }
+    case 'kitty':
+      return { bin: 'kitty', args: ['--directory', cwd] }
+    case 'alacritty':
+      return { bin: 'alacritty', args: ['--working-directory', cwd] }
+    case 'konsole':
+      return { bin: 'konsole', args: ['--workdir', cwd] }
+    case 'xfce4-terminal':
+      return { bin: 'xfce4-terminal', args: [`--working-directory=${cwd}`] }
+    default:
+      return {
+        bin: terminal,
+        args: ['--', 'bash', '-lc', `cd ${JSON.stringify(cwd)}; exec bash`],
+      }
+  }
+}
+
+function runGit(
+  cwd: string,
+  args: string[],
+): Promise<{ ok: boolean; stdout: string; stderr: string; code: number }> {
+  return new Promise((resolve) => {
+    const child = spawn('git', args, {
+      cwd,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+    })
+    let stdout = ''
+    let stderr = ''
+    child.stdout?.on('data', (chunk: Buffer) => {
+      stdout += chunk.toString()
+    })
+    child.stderr?.on('data', (chunk: Buffer) => {
+      stderr += chunk.toString()
+    })
+    child.on('error', (err) => {
+      resolve({ ok: false, stdout, stderr: err.message, code: 1 })
+    })
+    child.on('close', (code) => {
+      resolve({
+        ok: code === 0,
+        stdout: stdout.trim(),
+        stderr: stderr.trim(),
+        code: code ?? 1,
+      })
+    })
+  })
 }
 
 function buildTerminalArgs(
@@ -409,6 +466,67 @@ app.whenReady().then(() => {
     const err = await shell.openPath(projectPath)
     return err ? { ok: false, error: err } : { ok: true }
   })
+
+  ipcMain.handle('projects:openTerminal', async (_event, projectPath: string) => {
+    if (!projectPath || !existsSync(projectPath)) {
+      return { ok: false, error: `Path does not exist: ${projectPath}` }
+    }
+    const terminal = await findTerminal()
+    if (!terminal) return { ok: false, error: 'No supported terminal found' }
+
+    const { bin, args } = buildOpenTerminalArgs(terminal, projectPath)
+    const child = spawn(bin, args, { detached: true, stdio: 'ignore' })
+    child.unref()
+    return { ok: true, terminal: bin }
+  })
+
+  ipcMain.handle('projects:gitBranch', async (_event, projectPath: string) => {
+    if (!projectPath || !existsSync(projectPath)) {
+      return { ok: false, branch: null, error: `Path does not exist: ${projectPath}` }
+    }
+    const result = await runGit(projectPath, ['rev-parse', '--abbrev-ref', 'HEAD'])
+    if (!result.ok) {
+      return { ok: false, branch: null, error: 'Не git-репозиторий или ошибка git' }
+    }
+    return { ok: true, branch: result.stdout }
+  })
+
+  ipcMain.handle('projects:gitPull', async (_event, projectPath: string) => {
+    if (!projectPath || !existsSync(projectPath)) {
+      return { ok: false, error: `Path does not exist: ${projectPath}` }
+    }
+    const result = await runGit(projectPath, ['pull'])
+    if (!result.ok) {
+      return { ok: false, error: 'Есть ошибки (git pull)' }
+    }
+    return { ok: true }
+  })
+
+  ipcMain.handle(
+    'projects:gitPush',
+    async (_event, payload: GitPushPayload) => {
+      const projectPath = payload.projectPath?.trim()
+      const message = payload.message?.trim()
+      if (!projectPath || !existsSync(projectPath)) {
+        return { ok: false, error: `Path does not exist: ${projectPath}` }
+      }
+      if (!message) return { ok: false, error: 'Укажите сообщение коммита' }
+
+      const add = await runGit(projectPath, ['add', '.'])
+      if (!add.ok) return { ok: false, error: 'Есть ошибки (git add)' }
+
+      const commit = await runGit(projectPath, ['commit', '-m', message])
+      if (!commit.ok) {
+        // nothing to commit is still a failure for this flow
+        return { ok: false, error: 'Есть ошибки (git commit)' }
+      }
+
+      const push = await runGit(projectPath, ['push'])
+      if (!push.ok) return { ok: false, error: 'Есть ошибки (git push)' }
+
+      return { ok: true }
+    },
+  )
 
   ipcMain.handle('projects:openUrl', async (_event, url: string) => {
     if (!url) return { ok: false, error: 'Missing url' }

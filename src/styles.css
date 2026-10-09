@@ -304,7 +304,8 @@ header p {
   color: var(--muted);
 }
 
-.field input {
+.field input,
+.field textarea {
   border: 1px solid var(--border);
   background: #121212;
   color: var(--text);
@@ -312,11 +313,21 @@ header p {
   padding: 0.5rem 0.65rem;
   font: inherit;
   font-size: 0.9rem;
+  resize: vertical;
 }
 
-.field input:focus {
+.field input:focus,
+.field textarea:focus {
   outline: 1px solid var(--accent);
   border-color: var(--accent);
+}
+
+.icon-btn.git-pull {
+  color: #8ab4f8;
+}
+
+.icon-btn.git-push {
+  color: #c58af9;
 }
 
 .field-row {

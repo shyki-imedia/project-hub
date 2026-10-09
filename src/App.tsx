@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ProjectConfig } from '../electron/types'
 import { resolveProjectUrl } from '../electron/types'
+import GitPushForm from './GitPushForm'
 import ProjectForm from './ProjectForm'
 import {
   IconCursor,
   IconExternal,
-  IconFolder,
+  IconGitPull,
+  IconGitPush,
   IconPlay,
   IconPlus,
   IconRefresh,
@@ -13,6 +15,7 @@ import {
   IconSearch,
   IconSettings,
   IconStop,
+  IconTerminal,
 } from './icons'
 
 type Status = { kind: 'idle' | 'ok' | 'error'; text: string }
@@ -48,6 +51,7 @@ export default function App() {
   const [status, setStatus] = useState<Status>({ kind: 'idle', text: '' })
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<ProjectConfig | null>(null)
+  const [pushProject, setPushProject] = useState<ProjectConfig | null>(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -102,12 +106,22 @@ export default function App() {
     )
   }
 
-  async function openFolder(project: ProjectConfig) {
-    const result = await window.hub.openFolder(project.path)
+  async function openTerminal(project: ProjectConfig) {
+    const result = await window.hub.openTerminal(project.path)
     setStatus(
       result.ok
-        ? { kind: 'ok', text: `Folder: ${project.path}` }
-        : { kind: 'error', text: result.error ?? 'Failed to open folder' },
+        ? { kind: 'ok', text: `Terminal: ${result.terminal}` }
+        : { kind: 'error', text: result.error ?? 'Failed to open terminal' },
+    )
+  }
+
+  async function gitPull(project: ProjectConfig) {
+    setStatus({ kind: 'idle', text: `git pull: ${project.name}…` })
+    const result = await window.hub.gitPull(project.path)
+    setStatus(
+      result.ok
+        ? { kind: 'ok', text: `Pull ok — ${project.name}` }
+        : { kind: 'error', text: result.error ?? 'Есть ошибки' },
     )
   }
 
@@ -204,10 +218,10 @@ export default function App() {
                       <IconSettings />
                     </IconButton>
                     <IconButton
-                      label="Открыть папку"
-                      onClick={() => void openFolder(project)}
+                      label="Открыть терминал"
+                      onClick={() => void openTerminal(project)}
                     >
-                      <IconFolder />
+                      <IconTerminal />
                     </IconButton>
                     {siteUrl ? (
                       <IconButton
@@ -280,6 +294,20 @@ export default function App() {
                   >
                     <IconCursor />
                   </IconButton>
+                  <IconButton
+                    label="git pull"
+                    className="git-pull"
+                    onClick={() => void gitPull(project)}
+                  >
+                    <IconGitPull />
+                  </IconButton>
+                  <IconButton
+                    label="git push"
+                    className="git-push"
+                    onClick={() => setPushProject(project)}
+                  >
+                    <IconGitPush />
+                  </IconButton>
                 </div>
               </article>
             )
@@ -295,6 +323,17 @@ export default function App() {
             setEditing(null)
           }}
           onSaved={(id) => void onSaved(id)}
+        />
+      ) : null}
+
+      {pushProject ? (
+        <GitPushForm
+          project={pushProject}
+          onClose={() => setPushProject(null)}
+          onDone={(ok, text) => {
+            setPushProject(null)
+            setStatus({ kind: ok ? 'ok' : 'error', text })
+          }}
         />
       ) : null}
     </div>

@@ -121,3 +121,37 @@ export function IconSettings({ size, className }: IconProps) {
     </Svg>
   )
 }
+
+export function IconTerminal({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <path d="M4 17 10 11 4 5" />
+      <path d="M12 19h8" />
+    </Svg>
+  )
+}
+
+export function IconGitPull({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <circle cx="6" cy="6" r="2" />
+      <circle cx="6" cy="18" r="2" />
+      <path d="M6 8v8" />
+      <path d="M18 11V6a2 2 0 0 0-2-2h-3" />
+      <path d="m11 6 2-2 2 2" />
+      <path d="M18 11a4 4 0 0 1-4 4H6" />
+    </Svg>
+  )
+}
+
+export function IconGitPush({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <circle cx="6" cy="18" r="2" />
+      <circle cx="18" cy="6" r="2" />
+      <path d="M6 16V8a4 4 0 0 1 4-4h3" />
+      <path d="m11 6 2-2 2 2" />
+      <path d="M18 8v8" />
+    </Svg>
+  )
+}

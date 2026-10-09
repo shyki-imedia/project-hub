@@ -31,6 +31,11 @@ export type ProjectSavePayload = {
   createProjectHub?: boolean
 }
 
+export type GitPushPayload = {
+  projectPath: string
+  message: string
+}
+
 export function resolveProjectUrl(
   project: Pick<ProjectConfig, 'url' | 'port'>,
 ): string | null {
