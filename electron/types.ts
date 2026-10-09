@@ -20,7 +20,20 @@ export type RunCommandPayload = {
   command: string
 }
 
-export function resolveProjectUrl(project: Pick<ProjectConfig, 'url' | 'port'>): string | null {
+export type ProjectSavePayload = {
+  /** Existing id when editing; omit when creating */
+  id?: string
+  name: string
+  path: string
+  url?: string
+  port?: number
+  commands: ProjectCommands
+  createProjectHub?: boolean
+}
+
+export function resolveProjectUrl(
+  project: Pick<ProjectConfig, 'url' | 'port'>,
+): string | null {
   if (project.url) return project.url
   if (project.port != null) return `http://localhost:${project.port}`
   return null

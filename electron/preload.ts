@@ -1,5 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { ProjectConfig, RunCommandPayload } from './types'
+import type {
+  ProjectConfig,
+  ProjectSavePayload,
+  RunCommandPayload,
+} from './types'
 
 const api = {
   listProjects: (): Promise<ProjectConfig[]> =>
@@ -22,6 +26,14 @@ const api = {
 
   openUrl: (url: string): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('projects:openUrl', url),
+
+  pickFolder: (): Promise<{ ok: boolean; path: string | null }> =>
+    ipcRenderer.invoke('projects:pickFolder'),
+
+  saveProject: (
+    payload: ProjectSavePayload,
+  ): Promise<{ ok: boolean; id?: string; error?: string }> =>
+    ipcRenderer.invoke('projects:save', payload),
 }
 
 contextBridge.exposeInMainWorld('hub', api)

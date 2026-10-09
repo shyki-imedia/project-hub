@@ -1,10 +1,23 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { spawn } from 'node:child_process'
-import { existsSync, realpathSync, readdirSync, readFileSync } from 'node:fs'
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  realpathSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parse as parseYaml } from 'yaml'
-import type { ProjectConfig, ProjectCommands, RunCommandPayload } from './types'
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
+import type {
+  ProjectConfig,
+  ProjectCommands,
+  ProjectSavePayload,
+  RunCommandPayload,
+} from './types'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -140,6 +153,136 @@ function buildTerminalArgs(
   }
 }
 
+const CYR_MAP: Record<string, string> = {
+  а: 'a',
+  б: 'b',
+  в: 'v',
+  г: 'g',
+  д: 'd',
+  е: 'e',
+  ё: 'yo',
+  ж: 'zh',
+  з: 'z',
+  и: 'i',
+  й: 'y',
+  к: 'k',
+  л: 'l',
+  м: 'm',
+  н: 'n',
+  о: 'o',
+  п: 'p',
+  р: 'r',
+  с: 's',
+  т: 't',
+  у: 'u',
+  ф: 'f',
+  х: 'h',
+  ц: 'ts',
+  ч: 'ch',
+  ш: 'sh',
+  щ: 'sch',
+  ъ: '',
+  ы: 'y',
+  ь: '',
+  э: 'e',
+  ю: 'yu',
+  я: 'ya',
+}
+
+function slugifyId(name: string): string {
+  const lower = name.trim().toLowerCase()
+  let out = ''
+  for (const ch of lower) {
+    if (CYR_MAP[ch] !== undefined) out += CYR_MAP[ch]
+    else if (/[a-z0-9]/.test(ch)) out += ch
+    else if (/[\s._/\\-]/.test(ch)) out += '-'
+  }
+  out = out.replace(/-+/g, '-').replace(/^-|-$/g, '')
+  return out || 'project'
+}
+
+function uniqueProjectId(base: string): string {
+  const root = projectsRoot()
+  let id = base
+  let n = 2
+  while (existsSync(path.join(root, id))) {
+    id = `${base}-${n}`
+    n += 1
+  }
+  return id
+}
+
+function cleanCommands(commands: ProjectCommands): ProjectCommands {
+  const out: ProjectCommands = {}
+  for (const key of ['dev', 'stop', 'deploy:dev', 'deploy:prod'] as const) {
+    const value = commands[key]?.trim()
+    if (value) out[key] = value
+  }
+  return out
+}
+
+function writeProjectYaml(id: string, payload: ProjectSavePayload) {
+  const root = projectsRoot()
+  mkdirSync(root, { recursive: true })
+  const dir = path.join(root, id)
+  mkdirSync(dir, { recursive: true })
+
+  const doc: Record<string, unknown> = {
+    name: payload.name.trim(),
+    path: payload.path.trim(),
+  }
+  if (payload.url?.trim()) doc.url = payload.url.trim()
+  if (payload.port != null && !Number.isNaN(Number(payload.port))) {
+    doc.port = Number(payload.port)
+  }
+  doc.commands = cleanCommands(payload.commands)
+
+  writeFileSync(
+    path.join(dir, 'project.yaml'),
+    stringifyYaml(doc, { lineWidth: 0 }),
+    'utf8',
+  )
+}
+
+function ensureProjectHubDir(projectPath: string) {
+  const hubDir = path.join(projectPath, '.project_hub')
+  mkdirSync(hubDir, { recursive: true })
+
+  const readme = path.join(hubDir, 'README.md')
+  if (!existsSync(readme)) {
+    writeFileSync(
+      readme,
+      [
+        '# .project_hub',
+        '',
+        'Локальные Docker/настройки Project Hub. Не коммитить в репозиторий сайта.',
+        '',
+        'Положи сюда `docker-compose.yml`, `.env`, nginx/php и скрипты восстановления.',
+        '',
+      ].join('\n'),
+      'utf8',
+    )
+  }
+
+  const gitignorePath = path.join(projectPath, '.gitignore')
+  const line = '/.project_hub/'
+  if (existsSync(gitignorePath)) {
+    const current = readFileSync(gitignorePath, 'utf8')
+    if (!current.split(/\r?\n/).includes(line)) {
+      appendFileSync(
+        gitignorePath,
+        `\n# Project Hub local docker\n${line}\n`,
+      )
+    }
+  } else {
+    writeFileSync(
+      gitignorePath,
+      `# Project Hub local docker\n${line}\n`,
+      'utf8',
+    )
+  }
+}
+
 function loadProjects(): ProjectConfig[] {
   const root = projectsRoot()
   if (!existsSync(root)) return []
@@ -272,6 +415,51 @@ app.whenReady().then(() => {
     await shell.openExternal(url)
     return { ok: true }
   })
+
+  ipcMain.handle('projects:pickFolder', async () => {
+    const win = BrowserWindow.getFocusedWindow()
+    const result = win
+      ? await dialog.showOpenDialog(win, {
+          properties: ['openDirectory', 'createDirectory'],
+        })
+      : await dialog.showOpenDialog({
+          properties: ['openDirectory', 'createDirectory'],
+        })
+    if (result.canceled || !result.filePaths[0]) {
+      return { ok: false as const, path: null }
+    }
+    return { ok: true as const, path: result.filePaths[0] }
+  })
+
+  ipcMain.handle(
+    'projects:save',
+    async (_event, payload: ProjectSavePayload) => {
+      try {
+        const name = payload.name?.trim()
+        const projectPath = payload.path?.trim()
+        if (!name) return { ok: false, error: 'Укажите имя проекта' }
+        if (!projectPath) return { ok: false, error: 'Укажите путь к папке' }
+        if (!existsSync(projectPath)) {
+          return { ok: false, error: `Папка не существует: ${projectPath}` }
+        }
+
+        const id = payload.id?.trim() || uniqueProjectId(slugifyId(name))
+
+        writeProjectYaml(id, payload)
+
+        if (payload.createProjectHub) {
+          ensureProjectHubDir(projectPath)
+        }
+
+        return { ok: true, id }
+      } catch (err) {
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : 'Save failed',
+        }
+      }
+    },
+  )
 
   createWindow()
 

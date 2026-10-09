@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ProjectConfig } from '../electron/types'
 import { resolveProjectUrl } from '../electron/types'
+import ProjectForm from './ProjectForm'
 import {
   IconCursor,
   IconExternal,
   IconFolder,
-  IconGear,
+  IconPlay,
+  IconPlus,
   IconRefresh,
   IconRocket,
   IconSearch,
+  IconSettings,
   IconStop,
 } from './icons'
 
@@ -43,6 +46,8 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<Status>({ kind: 'idle', text: '' })
+  const [formOpen, setFormOpen] = useState(false)
+  const [editing, setEditing] = useState<ProjectConfig | null>(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -117,6 +122,23 @@ export default function App() {
     )
   }
 
+  function openCreate() {
+    setEditing(null)
+    setFormOpen(true)
+  }
+
+  function openEdit(project: ProjectConfig) {
+    setEditing(project)
+    setFormOpen(true)
+  }
+
+  async function onSaved(id: string) {
+    setFormOpen(false)
+    setEditing(null)
+    await refresh()
+    setStatus({ kind: 'ok', text: `Сохранено: ${id}` })
+  }
+
   return (
     <div className="app">
       <header>
@@ -124,9 +146,18 @@ export default function App() {
           <h1>Project Hub</h1>
           <p>Запуск, деплой и открытие проектов</p>
         </div>
-        <IconButton label="Refresh" className="ghost" onClick={() => void refresh()}>
-          <IconRefresh />
-        </IconButton>
+        <div className="header-actions">
+          <IconButton label="Добавить проект" className="primary" onClick={openCreate}>
+            <IconPlus />
+          </IconButton>
+          <IconButton
+            label="Refresh"
+            className="ghost"
+            onClick={() => void refresh()}
+          >
+            <IconRefresh />
+          </IconButton>
+        </div>
       </header>
 
       <div className="toolbar">
@@ -151,8 +182,7 @@ export default function App() {
         <p className="empty">
           {projects.length === 0 ? (
             <>
-              Нет проектов. Добавьте{' '}
-              <code>projects/&lt;id&gt;/project.yaml</code>
+              Нет проектов. Нажмите <strong>+</strong>, чтобы добавить.
             </>
           ) : (
             'Ничего не найдено'
@@ -167,6 +197,12 @@ export default function App() {
                 <div className="card-top">
                   <h2 title={project.path}>{project.name}</h2>
                   <div className="card-meta">
+                    <IconButton
+                      label="Настройки"
+                      onClick={() => openEdit(project)}
+                    >
+                      <IconSettings />
+                    </IconButton>
                     <IconButton
                       label="Открыть папку"
                       onClick={() => void openFolder(project)}
@@ -194,7 +230,7 @@ export default function App() {
                         void run(project, project.commands.dev!, 'Dev')
                       }
                     >
-                      <IconGear />
+                      <IconPlay />
                     </IconButton>
                   ) : null}
                   {project.commands.stop ? (
@@ -250,6 +286,17 @@ export default function App() {
           })}
         </div>
       )}
+
+      {formOpen ? (
+        <ProjectForm
+          initial={editing}
+          onClose={() => {
+            setFormOpen(false)
+            setEditing(null)
+          }}
+          onSaved={(id) => void onSaved(id)}
+        />
+      ) : null}
     </div>
   )
 }
