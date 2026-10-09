@@ -12,6 +12,10 @@ export type ProjectConfig = {
   /** Open in browser. If omitted, built from port as http://localhost:{port} */
   url?: string
   port?: number
+  /** Figma / design mockup */
+  figma?: string
+  /** Bug list (Google Sheets, etc.) */
+  bugs?: string
   commands: ProjectCommands
 }
 
@@ -27,6 +31,8 @@ export type ProjectSavePayload = {
   path: string
   url?: string
   port?: number
+  figma?: string
+  bugs?: string
   commands: ProjectCommands
   createProjectHub?: boolean
 }

@@ -237,6 +237,11 @@ header p {
   color: var(--accent);
 }
 
+.icon-btn.link-figma,
+.icon-btn.link-sheets {
+  background: #171717;
+}
+
 .empty {
   color: var(--muted);
   padding: 2rem 0;

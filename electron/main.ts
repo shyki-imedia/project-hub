@@ -292,6 +292,8 @@ function writeProjectYaml(id: string, payload: ProjectSavePayload) {
   if (payload.port != null && !Number.isNaN(Number(payload.port))) {
     doc.port = Number(payload.port)
   }
+  if (payload.figma?.trim()) doc.figma = payload.figma.trim()
+  if (payload.bugs?.trim()) doc.bugs = payload.bugs.trim()
   doc.commands = cleanCommands(payload.commands)
 
   writeFileSync(
@@ -359,6 +361,8 @@ function loadProjects(): ProjectConfig[] {
         path?: string
         url?: string
         port?: number
+        figma?: string
+        bugs?: string
         commands?: ProjectCommands
       }
 
@@ -370,6 +374,8 @@ function loadProjects(): ProjectConfig[] {
         path: data.path,
         url: data.url,
         port: data.port,
+        figma: data.figma,
+        bugs: data.bugs,
         commands: data.commands ?? {},
       })
     } catch (err) {

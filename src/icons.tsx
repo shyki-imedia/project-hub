@@ -155,3 +155,48 @@ export function IconGitPush({ size, className }: IconProps) {
     </Svg>
   )
 }
+
+/** Simplified Figma mark */
+export function IconFigma({ size = 16, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden
+    >
+      <path
+        fill="#F24E1E"
+        d="M8 24a4 4 0 0 0 4-4v-4H8a4 4 0 1 0 0 8z"
+      />
+      <path fill="#A259FF" d="M4 12a4 4 0 0 1 4-4h4v8H8a4 4 0 0 1-4-4z" />
+      <path fill="#1ABCFE" d="M12 4h4a4 4 0 1 1 0 8h-4V4z" />
+      <path fill="#0ACF83" d="M12 0H8a4 4 0 0 0 0 8h4V0z" />
+      <path fill="#FF7262" d="M12 0h4a4 4 0 1 1 0 8h-4V0z" />
+    </svg>
+  )
+}
+
+/** Google Sheets-like grid mark */
+export function IconSheets({ size = 16, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden
+    >
+      <path
+        fill="#0F9D58"
+        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
+      />
+      <path fill="#87CEAC" d="M14 2v6h6l-6-6z" />
+      <path
+        fill="#fff"
+        d="M7.5 11h9v8h-9v-8zm1 1.5v2h2.5v-2H8.5zm3.5 0v2H14v-2h-2zm3.5 0v2h2v-2h-2zm-7 3.5v2H11v-2H8.5zm3.5 0v2H14v-2h-2zm3.5 0v2h2v-2h-2z"
+      />
+    </svg>
+  )
+}

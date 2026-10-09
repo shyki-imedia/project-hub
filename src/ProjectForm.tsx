@@ -12,6 +12,8 @@ type FormState = {
   path: string
   url: string
   port: string
+  figma: string
+  bugs: string
   commandDev: string
   commandStop: string
   commandDeployDev: string
@@ -25,6 +27,8 @@ function fromProject(project?: ProjectConfig | null): FormState {
     path: project?.path ?? '',
     url: project?.url ?? '',
     port: project?.port != null ? String(project.port) : '',
+    figma: project?.figma ?? '',
+    bugs: project?.bugs ?? '',
     commandDev: project?.commands.dev ?? '',
     commandStop: project?.commands.stop ?? '',
     commandDeployDev: project?.commands['deploy:dev'] ?? '',
@@ -82,6 +86,8 @@ export default function ProjectForm({ initial, onClose, onSaved }: Props) {
       path: form.path,
       url: form.url.trim() || undefined,
       port,
+      figma: form.figma.trim() || undefined,
+      bugs: form.bugs.trim() || undefined,
       commands,
       createProjectHub: form.createProjectHub,
     }
@@ -162,6 +168,24 @@ export default function ProjectForm({ initial, onClose, onSaved }: Props) {
               />
             </label>
           </div>
+
+          <label className="field">
+            <span>Макет (Figma)</span>
+            <input
+              value={form.figma}
+              onChange={(e) => setField('figma', e.target.value)}
+              placeholder="https://www.figma.com/design/…"
+            />
+          </label>
+
+          <label className="field">
+            <span>Баг-лист (Google Sheets)</span>
+            <input
+              value={form.bugs}
+              onChange={(e) => setField('bugs', e.target.value)}
+              placeholder="https://docs.google.com/spreadsheets/…"
+            />
+          </label>
 
           <label className="field">
             <span>Dev</span>

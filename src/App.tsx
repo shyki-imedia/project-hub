@@ -6,6 +6,7 @@ import ProjectForm from './ProjectForm'
 import {
   IconCursor,
   IconExternal,
+  IconFigma,
   IconGitPull,
   IconGitPush,
   IconPlay,
@@ -14,6 +15,7 @@ import {
   IconRocket,
   IconSearch,
   IconSettings,
+  IconSheets,
   IconStop,
   IconTerminal,
 } from './icons'
@@ -125,15 +127,19 @@ export default function App() {
     )
   }
 
-  async function openSite(project: ProjectConfig) {
-    const url = resolveProjectUrl(project)
-    if (!url) return
+  async function openLink(url: string, label?: string) {
     const result = await window.hub.openUrl(url)
     setStatus(
       result.ok
-        ? { kind: 'ok', text: url }
+        ? { kind: 'ok', text: label ? `${label}: ${url}` : url }
         : { kind: 'error', text: result.error ?? 'Failed to open URL' },
     )
+  }
+
+  async function openSite(project: ProjectConfig) {
+    const url = resolveProjectUrl(project)
+    if (!url) return
+    await openLink(url)
   }
 
   function openCreate() {
@@ -230,6 +236,24 @@ export default function App() {
                         onClick={() => void openSite(project)}
                       >
                         <IconExternal />
+                      </IconButton>
+                    ) : null}
+                    {project.figma ? (
+                      <IconButton
+                        label="Макет Figma"
+                        className="link-figma"
+                        onClick={() => void openLink(project.figma!, 'Figma')}
+                      >
+                        <IconFigma />
+                      </IconButton>
+                    ) : null}
+                    {project.bugs ? (
+                      <IconButton
+                        label="Баг-лист"
+                        className="link-sheets"
+                        onClick={() => void openLink(project.bugs!, 'Bugs')}
+                      >
+                        <IconSheets />
                       </IconButton>
                     ) : null}
                   </div>
