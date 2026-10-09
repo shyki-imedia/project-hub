@@ -16,6 +16,8 @@ export type ProjectConfig = {
   figma?: string
   /** Bug list (Google Sheets, etc.) */
   bugs?: string
+  /** OpenAPI / Swagger UI */
+  swagger?: string
   commands: ProjectCommands
 }
 
@@ -33,6 +35,7 @@ export type ProjectSavePayload = {
   port?: number
   figma?: string
   bugs?: string
+  swagger?: string
   commands: ProjectCommands
   createProjectHub?: boolean
 }

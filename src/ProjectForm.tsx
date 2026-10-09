@@ -14,6 +14,7 @@ type FormState = {
   port: string
   figma: string
   bugs: string
+  swagger: string
   commandDev: string
   commandStop: string
   commandDeployDev: string
@@ -29,6 +30,7 @@ function fromProject(project?: ProjectConfig | null): FormState {
     port: project?.port != null ? String(project.port) : '',
     figma: project?.figma ?? '',
     bugs: project?.bugs ?? '',
+    swagger: project?.swagger ?? '',
     commandDev: project?.commands.dev ?? '',
     commandStop: project?.commands.stop ?? '',
     commandDeployDev: project?.commands['deploy:dev'] ?? '',
@@ -88,6 +90,7 @@ export default function ProjectForm({ initial, onClose, onSaved }: Props) {
       port,
       figma: form.figma.trim() || undefined,
       bugs: form.bugs.trim() || undefined,
+      swagger: form.swagger.trim() || undefined,
       commands,
       createProjectHub: form.createProjectHub,
     }
@@ -184,6 +187,15 @@ export default function ProjectForm({ initial, onClose, onSaved }: Props) {
               value={form.bugs}
               onChange={(e) => setField('bugs', e.target.value)}
               placeholder="https://docs.google.com/spreadsheets/…"
+            />
+          </label>
+
+          <label className="field">
+            <span>Swagger</span>
+            <input
+              value={form.swagger}
+              onChange={(e) => setField('swagger', e.target.value)}
+              placeholder="http://localhost:8080/swagger"
             />
           </label>
 

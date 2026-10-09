@@ -187,6 +187,25 @@ export function IconFigma({ size = 16, className }: IconProps) {
   )
 }
 
+/** Swagger / OpenAPI mark */
+export function IconSwagger({ size = 16, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden
+    >
+      <rect x="2" y="2" width="20" height="20" rx="4" fill="#85EA2D" />
+      <path
+        fill="#1B1B1B"
+        d="M7.2 8.2c0-1.3 1-2.2 2.4-2.2h1.1c1.3 0 2.3.9 2.3 2.1 0 .9-.5 1.6-1.3 1.9l1.6 2.8h-1.5l-1.4-2.6H9.5v2.6H8V8.2h-.8zm2.3.9h.8c.5 0 .8-.3.8-.7s-.3-.7-.8-.7h-.8v1.4zM14.2 6h1.4l1.8 5.2h.1L19.2 6H20.6l-2.3 6.8h-1.6L14.2 6z"
+      />
+    </svg>
+  )
+}
+
 /** Google Sheets-like grid mark */
 export function IconSheets({ size = 16, className }: IconProps) {
   return (

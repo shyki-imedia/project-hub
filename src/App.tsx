@@ -18,6 +18,7 @@ import {
   IconSettings,
   IconSheets,
   IconStop,
+  IconSwagger,
   IconTerminal,
 } from './icons'
 
@@ -265,6 +266,17 @@ export default function App() {
                         onClick={() => void openLink(project.bugs!, 'Bugs')}
                       >
                         <IconSheets />
+                      </IconButton>
+                    ) : null}
+                    {project.swagger ? (
+                      <IconButton
+                        label="Swagger"
+                        className="link-swagger"
+                        onClick={() =>
+                          void openLink(project.swagger!, 'Swagger')
+                        }
+                      >
+                        <IconSwagger />
                       </IconButton>
                     ) : null}
                   </div>

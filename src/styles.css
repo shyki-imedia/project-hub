@@ -238,7 +238,8 @@ header p {
 }
 
 .icon-btn.link-figma,
-.icon-btn.link-sheets {
+.icon-btn.link-sheets,
+.icon-btn.link-swagger {
   background: #171717;
 }
 

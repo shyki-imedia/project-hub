@@ -325,6 +325,7 @@ function writeProjectYaml(id: string, payload: ProjectSavePayload) {
   }
   if (payload.figma?.trim()) doc.figma = payload.figma.trim()
   if (payload.bugs?.trim()) doc.bugs = payload.bugs.trim()
+  if (payload.swagger?.trim()) doc.swagger = payload.swagger.trim()
   doc.commands = cleanCommands(payload.commands)
 
   writeFileSync(
@@ -394,6 +395,7 @@ function loadProjects(): ProjectConfig[] {
         port?: number
         figma?: string
         bugs?: string
+        swagger?: string
         commands?: ProjectCommands
       }
 
@@ -407,6 +409,7 @@ function loadProjects(): ProjectConfig[] {
         port: data.port,
         figma: data.figma,
         bugs: data.bugs,
+        swagger: data.swagger,
         commands: data.commands ?? {},
       })
     } catch (err) {
