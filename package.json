@@ -2,7 +2,7 @@
   "name": "project-hub",
   "version": "0.1.0",
   "private": true,
-  "description": "Local Ubuntu dashboard for managing projects",
+  "description": "Local dashboard for managing projects (Linux and macOS)",
   "main": "dist-electron/main.js",
   "type": "module",
   "scripts": {

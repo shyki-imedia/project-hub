@@ -32,6 +32,8 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
   : RENDERER_DIST
 
+const MACOS_TERMINAL = 'macos-terminal'
+
 const TERMINALS = [
   'ptyxis',
   'gnome-terminal',
@@ -41,6 +43,30 @@ const TERMINALS = [
   'xfce4-terminal',
   'x-terminal-emulator',
 ] as const
+
+function macLoginShell(): string {
+  return process.env.SHELL?.trim() || '/bin/zsh'
+}
+
+/** Opens Terminal.app via osascript (macOS). */
+function buildMacTerminalAppArgs(
+  cwd: string,
+  command?: string,
+): { bin: string; args: string[] } {
+  const loginShell = macLoginShell()
+  const inner = command
+    ? `cd ${JSON.stringify(cwd)} && ${holdShell(command)}`
+    : `cd ${JSON.stringify(cwd)} && exec ${JSON.stringify(loginShell)} -l`
+
+  const script = [
+    'tell application "Terminal"',
+    '  activate',
+    `  do script ${JSON.stringify(inner)}`,
+    'end tell',
+  ].join('\n')
+
+  return { bin: 'osascript', args: ['-e', script] }
+}
 
 function projectsRoot(): string {
   // In dev, vite-plugin-electron puts main in dist-electron/; configs live at repo root.
@@ -83,6 +109,9 @@ function terminalKind(resolvedPath: string): string {
 }
 
 async function findTerminal(): Promise<string | null> {
+  if (process.platform === 'darwin') {
+    return MACOS_TERMINAL
+  }
   for (const term of TERMINALS) {
     const located = await which(term)
     if (!located) continue
@@ -103,6 +132,8 @@ function buildOpenTerminalArgs(
   const shell = `cd ${JSON.stringify(cwd)} && exec bash`
 
   switch (terminal) {
+    case MACOS_TERMINAL:
+      return buildMacTerminalAppArgs(cwd)
     case 'ptyxis':
       return {
         bin: 'ptyxis',
@@ -190,6 +221,8 @@ function buildTerminalArgs(
   const held = holdShell(command)
 
   switch (terminal) {
+    case MACOS_TERMINAL:
+      return buildMacTerminalAppArgs(cwd, command)
     case 'ptyxis':
       return {
         bin: 'ptyxis',
