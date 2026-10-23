@@ -105,6 +105,15 @@ export function IconPlus({ size, className }: IconProps) {
   )
 }
 
+export function IconBack({ size, className }: IconProps) {
+  return (
+    <Svg size={size} className={className}>
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
+    </Svg>
+  )
+}
+
 export function IconPlay({ size, className }: IconProps) {
   return (
     <Svg size={size} className={className}>

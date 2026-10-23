@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import type { ProjectConfig } from '../electron/types'
 import { resolveProjectUrl } from '../electron/types'
 import GitCommitForm from './GitCommitForm'
+import ProjectDetail from './ProjectDetail'
 import ProjectForm from './ProjectForm'
 import {
   IconCursor,
@@ -41,7 +42,10 @@ function IconButton({
       className={`icon-btn ${className ?? ''}`.trim()}
       title={label}
       aria-label={label}
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick()
+      }}
     >
       {children}
     </button>
@@ -56,6 +60,7 @@ export default function App() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<ProjectConfig | null>(null)
   const [commitProject, setCommitProject] = useState<ProjectConfig | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -87,6 +92,11 @@ export default function App() {
         p.path.toLowerCase().includes(q),
     )
   }, [projects, query])
+
+  const selected = useMemo(
+    () => projects.find((p) => p.id === selectedId) ?? null,
+    [projects, selectedId],
+  )
 
   async function run(project: ProjectConfig, command: string, label: string) {
     setStatus({ kind: 'idle', text: `${label}: ${project.name}…` })
@@ -171,12 +181,54 @@ export default function App() {
     setStatus({ kind: 'ok', text: `Сохранено: ${id}` })
   }
 
+  if (selected) {
+    return (
+      <div className="app app-detail">
+        <div className={`status ${status.kind !== 'idle' ? status.kind : ''}`}>
+          {status.text}
+        </div>
+        <ProjectDetail
+          project={selected}
+          onBack={() => setSelectedId(null)}
+          onEdit={() => openEdit(selected)}
+          onRun={(command, label) => void run(selected, command, label)}
+          onCursor={() => void openCursor(selected)}
+          onTerminal={() => void openTerminal(selected)}
+          onGitPull={() => void gitPull(selected)}
+          onGitCommit={() => setCommitProject(selected)}
+          onGitPush={() => void gitPush(selected)}
+          onOpenLink={(url, label) => void openLink(url, label)}
+        />
+        {formOpen ? (
+          <ProjectForm
+            initial={editing}
+            onClose={() => {
+              setFormOpen(false)
+              setEditing(null)
+            }}
+            onSaved={(id) => void onSaved(id)}
+          />
+        ) : null}
+        {commitProject ? (
+          <GitCommitForm
+            project={commitProject}
+            onClose={() => setCommitProject(null)}
+            onDone={(ok, text) => {
+              setCommitProject(null)
+              setStatus({ kind: ok ? 'ok' : 'error', text })
+            }}
+          />
+        ) : null}
+      </div>
+    )
+  }
+
   return (
     <div className="app">
       <header>
         <div>
           <h1>Project Hub</h1>
-          <p>Запуск, деплой и открытие проектов</p>
+          <p>Запуск, деплой и открытие проектов · двойной клик — экран проекта</p>
         </div>
         <div className="header-actions">
           <IconButton label="Добавить проект" className="primary" onClick={openCreate}>
@@ -225,7 +277,12 @@ export default function App() {
           {filtered.map((project) => {
             const siteUrl = resolveProjectUrl(project)
             return (
-              <article key={project.id} className="card">
+              <article
+                key={project.id}
+                className="card card-clickable"
+                onDoubleClick={() => setSelectedId(project.id)}
+                title="Двойной клик — открыть проект"
+              >
                 <div className="card-top">
                   <h2 title={project.path}>{project.name}</h2>
                   <div className="card-meta">
